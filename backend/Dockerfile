@@ -1,12 +1,16 @@
 # Use Python 3.11 slim image
 FROM python:3.11-slim
 
-# Install system dependencies including Tesseract
+# Update package list and install system dependencies
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-eng \
     poppler-utils \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Verify tesseract installation
+RUN tesseract --version
 
 # Set working directory
 WORKDIR /app
