@@ -1,13 +1,36 @@
-from fastapi import APIRouter, UploadFile, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from services.image_validation import extract_text_from_pdf
-from utils.file_utils import save_upload_file
-from fastapi.responses import JSONResponse
-import uuid
+import tempfile
+import os
+import asyncio
 
 router = APIRouter()
 
 @router.post("/pdf")
-async def process_pdf(file: UploadFile, user_id: str = Form(...)):
-    filename = await save_upload_file(file)
-    extracted_text = extract_text_from_pdf(filename)
-    return JSONResponse(content={"user_id": user_id, "text": extracted_text})
+async def process_pdf(file: UploadFile = File(...)):
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+    
+    # Save uploaded file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+        content = await file.read()
+        tmp_file.write(content)
+        tmp_file_path = tmp_file.name
+    
+    try:
+        print(f"Starting PDF processing for: {file.filename}")
+        # Use the async version
+        extracted_text = await extract_text_from_pdf(tmp_file_path)
+        print(f"Completed PDF processing for: {file.filename}")
+        
+        return {
+            "filename": file.filename,
+            "extracted_text": extracted_text,
+            "status": "success"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up temporary file
+        if os.path.exists(tmp_file_path):
+            os.unlink(tmp_file_path)

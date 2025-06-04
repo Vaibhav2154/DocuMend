@@ -3,10 +3,12 @@ services:
     name: documend-backend
     env: python
     region: oregon
-    buildCommand: "chmod +x ./render-build.sh && ./render-build.sh"
+    buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn app:app --host 0.0.0.0 --port $PORT"
     plan: free
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: APT_PACKAGES
+        value: "tesseract-ocr tesseract-ocr-eng poppler-utils"
