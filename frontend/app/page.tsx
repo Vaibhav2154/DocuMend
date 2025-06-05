@@ -33,8 +33,15 @@ import {
 import dynamic from 'next/dynamic';
 
 // Dynamically import components that might cause SSR issues
-const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
-import { ModeToggle } from "@/components/mode-toggle";
+const ReactMarkdown = dynamic(() => import('react-markdown'), { 
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-muted h-20 rounded"></div>
+});
+
+const ModeToggle = dynamic(() => import("@/components/mode-toggle").then(mod => ({ default: mod.ModeToggle })), { 
+  ssr: false,
+  loading: () => <div className="w-9 h-9 bg-muted rounded-md animate-pulse"></div>
+});
 
 // Add proper type definitions
 interface TemplateConfig {
@@ -60,15 +67,15 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  // Safely get base URL with fallback
-  const baseUrl = typeof window !== 'undefined' 
-    ? process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
-    : "http://localhost:8000";
+  // Fix base URL to work with static exports
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
 
   useEffect(() => {
+    setIsMounted(true);
     setIsVisible(true);
   }, []);
 
@@ -188,7 +195,7 @@ export default function HomePage() {
     }
   };
 
-  // Fix the DOCX download function with proper error handling
+  // Fix the DOCX download function with better error handling
   const handleDownloadDocx = async () => {
     if (!summary) {
       toast({
@@ -203,8 +210,8 @@ export default function HomePage() {
       // Dynamically import marked to avoid SSR issues
       const { marked } = await import('marked');
       
-      // Convert markdown to HTML with proper typing
-      const htmlSummary = marked(summary) as string;
+      // Convert markdown to HTML
+      const htmlSummary = await marked(summary);
       
       // Create a properly formatted HTML document that can be saved as DOCX
       const htmlContent = `<!DOCTYPE html>
@@ -303,7 +310,7 @@ export default function HomePage() {
     }
   };
 
-  // Fix the PDF generation function with proper typing and error handling
+  // Fix the PDF generation function
   const handleDownloadPdf = async () => {
     if (!summary) {
       toast({
@@ -323,7 +330,7 @@ export default function HomePage() {
       const margin = 20;
       const maxWidth = pageWidth - 2 * margin;
       
-      // Convert markdown to plain text for PDF (removing markdown syntax)
+      // Convert markdown to plain text for PDF
       let plainTextSummary = summary
         .replace(/#{1,6}\s+/g, '')
         .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -375,7 +382,6 @@ export default function HomePage() {
         yPosition += 6;
       });
       
-      // Save the PDF
       pdf.save(`summary-${file?.name?.replace('.pdf', '') || 'document'}.pdf`);
       
       toast({
@@ -391,6 +397,15 @@ export default function HomePage() {
       });
     }
   };
+
+  // Don't render until mounted to avoid hydration issues
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-background via-background to-muted/20 transition-all duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
