@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import validate, chatbot
 import os
 
-app = FastAPI(title="CivicEye AI")
+app = FastAPI(title="DocuMend")
 
 # Configure CORS for production
 allowed_origins = [
