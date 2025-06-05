@@ -1,5 +1,7 @@
 # DocuMend
 
+> **⚠️ Performance Note:** Since Tesseract OCR is deployed on Render's free tier with limited hardware resources, PDF text extraction may take significantly longer than expected. For a demonstration of the application's full functionality, please watch this demo video: [DocuMend Demo](https://drive.google.com/file/d/1byCUJWrFqmBaTPwT03-j3Ff4R16t5LUW/view?usp=sharing)
+
 DocuMend is a full-stack application designed for processing and summarizing PDF documents. It leverages a Python-based backend with FastAPI and a Next.js frontend.
 
 ## Features
