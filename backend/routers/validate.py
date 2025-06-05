@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from services.image_validation import extract_text_from_pdf
+from services.image_validation import extract_text_from_pdf_async
 import tempfile
 import os
 import asyncio
@@ -20,7 +20,7 @@ async def process_pdf(file: UploadFile = File(...)):
     try:
         print(f"Starting PDF processing for: {file.filename}")
         # Use the async version
-        extracted_text = await extract_text_from_pdf(tmp_file_path)
+        extracted_text = await extract_text_from_pdf_async(tmp_file_path)
         print(f"Completed PDF processing for: {file.filename}")
         
         return {
