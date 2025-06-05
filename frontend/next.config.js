@@ -1,19 +1,11 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   output: 'export',
   eslint: {
     ignoreDuringBuilds: true, // Temporarily ignore ESLint during builds
   },
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  images: { 
-    unoptimized: true 
-  },
-  trailingSlash: true,
-  experimental: {
-    optimizeCss: true,
-  },
+  
   // Add webpack configuration to handle potential module issues
   webpack: (config, { isServer }) => {
     if (!isServer) {
