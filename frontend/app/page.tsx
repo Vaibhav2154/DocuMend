@@ -30,11 +30,10 @@ import {
   Users,
   BarChart3
 } from "lucide-react";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { marked } from 'marked';
+import dynamic from 'next/dynamic';
+
+// Dynamically import components that might cause SSR issues
+const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
 import { ModeToggle } from "@/components/mode-toggle";
 
 // Add proper type definitions
@@ -63,7 +62,11 @@ export default function HomePage() {
   const [isVisible, setIsVisible] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+  
+  // Safely get base URL with fallback
+  const baseUrl = typeof window !== 'undefined' 
+    ? process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
+    : "http://localhost:8000";
 
   useEffect(() => {
     setIsVisible(true);
@@ -114,7 +117,7 @@ export default function HomePage() {
       }
 
       const data = await response.json();
-      setExtractedText(data.extracted_text);
+      setExtractedText(data.extracted_text || "");
       setUploadProgress(100);
       setCurrentStep(2);
       
@@ -123,6 +126,7 @@ export default function HomePage() {
         description: "Text extracted successfully from PDF",
       });
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Error",
         description: "Failed to extract text from PDF",
@@ -165,7 +169,7 @@ export default function HomePage() {
       }
 
       const data = await response.json();
-      setSummary(data.summary);
+      setSummary(data.summary || "");
       setCurrentStep(4);
       
       toast({
@@ -173,6 +177,7 @@ export default function HomePage() {
         description: "Summary generated successfully",
       });
     } catch (error) {
+      console.error('Summary error:', error);
       toast({
         title: "Error",
         description: "Failed to generate summary",
@@ -183,8 +188,8 @@ export default function HomePage() {
     }
   };
 
-  // Fix the DOCX download function
-  const handleDownloadDocx = () => {
+  // Fix the DOCX download function with proper error handling
+  const handleDownloadDocx = async () => {
     if (!summary) {
       toast({
         title: "Error",
@@ -194,144 +199,111 @@ export default function HomePage() {
       return;
     }
 
-    // Convert markdown to HTML with proper typing
-    const htmlSummary = marked(summary) as string;
-    
-    // Create a properly formatted HTML document that can be saved as DOCX
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Document Summary</title>
-        <style>
-          body { 
-            font-family: 'Times New Roman', serif; 
-            line-height: 1.6; 
-            margin: 40px; 
-            color: #333;
-          }
-          h1 { 
-            color: #2c3e50; 
-            border-bottom: 3px solid #3498db; 
-            padding-bottom: 10px;
-            font-size: 28px;
-          }
-          h2 { 
-            color: #34495e; 
-            margin-top: 30px;
-            font-size: 22px;
-            border-left: 4px solid #3498db;
-            padding-left: 15px;
-          }
-          h3 { 
-            color: #5a6c7d; 
-            margin-top: 25px;
-            font-size: 18px;
-          }
-          h4, h5, h6 {
-            color: #7f8c8d;
-            margin-top: 20px;
-          }
-          p { 
-            margin-bottom: 15px; 
-            text-align: justify;
-          }
-          ul, ol { 
-            margin-bottom: 15px; 
-            padding-left: 30px;
-          }
-          li { 
-            margin-bottom: 8px; 
-          }
-          blockquote {
-            border-left: 4px solid #bdc3c7;
-            margin: 20px 0;
-            padding: 15px 20px;
-            background-color: #f8f9fa;
-            font-style: italic;
-          }
-          code {
-            background-color: #f1f2f6;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-          }
-          pre {
-            background-color: #f1f2f6;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-            margin: 15px 0;
-          }
-          table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px 0;
-          }
-          th, td {
-            border: 1px solid #bdc3c7;
-            padding: 12px;
-            text-align: left;
-          }
-          th {
-            background-color: #ecf0f1;
-            font-weight: bold;
-          }
-          .metadata { 
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
-            padding: 25px; 
-            border-radius: 10px; 
-            margin-bottom: 30px; 
-            border: 1px solid #bdc3c7;
-          }
-          .metadata h1 {
-            margin-top: 0;
-            border-bottom: none;
-          }
-          strong { 
-            color: #2c3e50; 
-          }
-          hr {
-            border: none;
-            height: 2px;
-            background: linear-gradient(to right, #3498db, transparent);
-            margin: 30px 0;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="metadata">
-          <h1>📄 Document Summary</h1>
-          <p><strong>Original File:</strong> ${file?.name || 'Unknown'}</p>
-          <p><strong>Template Used:</strong> ${templates[selectedTemplate as keyof typeof templates]}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
-        </div>
-        <hr>
-        <div class="summary-content">
-          ${htmlSummary}
-        </div>
-      </body>
-      </html>
-    `;
+    try {
+      // Dynamically import marked to avoid SSR issues
+      const { marked } = await import('marked');
+      
+      // Convert markdown to HTML with proper typing
+      const htmlSummary = marked(summary) as string;
+      
+      // Create a properly formatted HTML document that can be saved as DOCX
+      const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Document Summary</title>
+  <style>
+    body { 
+      font-family: 'Times New Roman', serif; 
+      line-height: 1.6; 
+      margin: 40px; 
+      color: #333;
+    }
+    h1 { 
+      color: #2c3e50; 
+      border-bottom: 3px solid #3498db; 
+      padding-bottom: 10px;
+      font-size: 28px;
+    }
+    h2 { 
+      color: #34495e; 
+      margin-top: 30px;
+      font-size: 22px;
+      border-left: 4px solid #3498db;
+      padding-left: 15px;
+    }
+    h3 { 
+      color: #5a6c7d; 
+      margin-top: 25px;
+      font-size: 18px;
+    }
+    h4, h5, h6 {
+      color: #7f8c8d;
+      margin-top: 20px;
+    }
+    p { 
+      margin-bottom: 15px; 
+      text-align: justify;
+    }
+    ul, ol { 
+      margin-bottom: 15px; 
+      padding-left: 30px;
+    }
+    li { 
+      margin-bottom: 8px; 
+    }
+    .metadata { 
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+      padding: 25px; 
+      border-radius: 10px; 
+      margin-bottom: 30px; 
+      border: 1px solid #bdc3c7;
+    }
+    .metadata h1 {
+      margin-top: 0;
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="metadata">
+    <h1>📄 Document Summary</h1>
+    <p><strong>Original File:</strong> ${file?.name || 'Unknown'}</p>
+    <p><strong>Template Used:</strong> ${templates[selectedTemplate] || 'Unknown'}</p>
+    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+  </div>
+  <hr>
+  <div class="summary-content">
+    ${htmlSummary}
+  </div>
+</body>
+</html>`;
 
-    const blob = new Blob([htmlContent], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `summary-${file?.name?.replace('.pdf', '') || 'document'}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `summary-${file?.name?.replace('.pdf', '') || 'document'}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-    toast({
-      title: "Success",
-      description: "Summary downloaded as Word document",
-    });
+      toast({
+        title: "Success",
+        description: "Summary downloaded as Word document",
+      });
+    } catch (error) {
+      console.error('DOCX download error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download Word document",
+        variant: "destructive",
+      });
+    }
   };
 
-  // Fix the PDF generation function with proper typing
+  // Fix the PDF generation function with proper typing and error handling
   const handleDownloadPdf = async () => {
     if (!summary) {
       toast({
@@ -353,160 +325,62 @@ export default function HomePage() {
       
       // Convert markdown to plain text for PDF (removing markdown syntax)
       let plainTextSummary = summary
-        .replace(/#{1,6}\s+/g, '') // Remove headers
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
-        .replace(/\*(.*?)\*/g, '$1') // Remove italic
-        .replace(/`(.*?)`/g, '$1') // Remove inline code
-        .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links, keep text
-        .replace(/^[-*+]\s+/gm, '• ') // Convert bullet points
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+        .replace(/^[-*+]\s+/gm, '• ')
         .replace(/^\d+\.\s+/gm, (match, offset, string) => {
-          // Convert numbered lists
           const lineStart = string.lastIndexOf('\n', offset) + 1;
           const currentLine = string.substring(lineStart, offset);
           const number = match.match(/\d+/)?.[0] || '1';
           return `${number}. `;
         })
-        .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
+        .replace(/\n{3,}/g, '\n\n')
         .trim();
       
-      // Add title with enhanced styling
+      // Add title
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(44, 62, 80); // Dark blue-gray
       pdf.text('Document Summary', margin, 35);
       
-      // Add decorative line under title
-      pdf.setDrawColor(52, 152, 219); // Blue
-      pdf.setLineWidth(1);
-      pdf.line(margin, 42, pageWidth - margin, 42);
-      
-      // Add metadata section with better formatting
+      // Add metadata
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(52, 73, 94); // Dark gray
       let yPosition = 60;
       
       const metadata = [
-        `📄 Original File: ${file?.name || 'Unknown'}`,
-        `📋 Template: ${templates[selectedTemplate as keyof typeof templates] || 'Unknown'}`,
-        `📅 Generated: ${new Date().toLocaleString()}`
+        `Original File: ${file?.name || 'Unknown'}`,
+        `Template: ${templates[selectedTemplate] || 'Unknown'}`,
+        `Generated: ${new Date().toLocaleString()}`
       ];
       
-      // Create metadata box
-      pdf.setFillColor(248, 249, 250); // Light gray background
-      pdf.setDrawColor(189, 195, 199); // Border color
-      pdf.roundedRect(margin, yPosition - 8, maxWidth, 35, 3, 3, 'FD');
-      
       metadata.forEach((line, index) => {
-        pdf.setFont('helvetica', index === 0 ? 'bold' : 'normal');
-        pdf.text(line, margin + 5, yPosition + (index * 8) + 5);
+        pdf.text(line, margin, yPosition + (index * 8));
       });
       
-      yPosition += 45;
+      yPosition += 40;
       
-      // Add separator line with gradient effect
-      pdf.setDrawColor(52, 152, 219);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 15;
-      
-      // Process summary content with enhanced formatting
+      // Add summary content
       pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(33, 37, 41); // Almost black
-      
-      // Split text into paragraphs and process each
-      const paragraphs = plainTextSummary.split('\n\n');
-      
-      paragraphs.forEach((paragraph, paragraphIndex) => {
-        if (!paragraph.trim()) return;
-        
-        // Check if it's a heading (starts with original markdown indicators)
-        const originalLine = summary.split('\n').find(line => 
-          line.replace(/#{1,6}\s+/, '') === paragraph.trim()
-        );
-        
-        if (originalLine && originalLine.match(/^#{1,6}\s+/)) {
-          // This is a heading
-          const headerLevel = (originalLine.match(/#/g) || []).length;
-          const fontSize = Math.max(16 - headerLevel * 2, 11);
-          
-          // Add some space before headings (except first)
-          if (paragraphIndex > 0) yPosition += 8;
-          
-          pdf.setFontSize(fontSize);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(52, 73, 94);
-          
-          const headerLines = pdf.splitTextToSize(paragraph.trim(), maxWidth);
-          headerLines.forEach((line: string) => {
-            if (yPosition > pageHeight - margin - 10) {
-              pdf.addPage();
-              yPosition = margin + 10;
-            }
-            pdf.text(line, margin, yPosition);
-            yPosition += fontSize * 0.35 + 2;
-          });
-          
-          yPosition += 5; // Extra space after headings
-        } else {
-          // Regular paragraph
-          pdf.setFontSize(11);
-          pdf.setFont('helvetica', 'normal');
-          pdf.setTextColor(33, 37, 41);
-          
-          const lines = pdf.splitTextToSize(paragraph.trim(), maxWidth);
-          lines.forEach((line: string) => {
-            if (yPosition > pageHeight - margin - 5) {
-              pdf.addPage();
-              yPosition = margin + 10;
-            }
-            
-            // Handle bullet points with better formatting
-            if (line.startsWith('• ')) {
-              pdf.text('•', margin, yPosition);
-              pdf.text(line.substring(2), margin + 8, yPosition);
-            } else if (line.match(/^\d+\.\s/)) {
-              // Handle numbered lists
-              const parts = line.split(/^(\d+\.\s)/);
-              if (parts.length >= 3) {
-                pdf.text(parts[1], margin, yPosition);
-                pdf.text(parts[2], margin + 12, yPosition);
-              } else {
-                pdf.text(line, margin, yPosition);
-              }
-            } else {
-              pdf.text(line, margin, yPosition);
-            }
-            
-            yPosition += 6;
-          });
-          
-          yPosition += 4; // Space between paragraphs
+      const lines = pdf.splitTextToSize(plainTextSummary, maxWidth);
+      lines.forEach((line: string) => {
+        if (yPosition > pageHeight - margin - 5) {
+          pdf.addPage();
+          yPosition = margin + 10;
         }
+        pdf.text(line, margin, yPosition);
+        yPosition += 6;
       });
-      
-      // Add footer with page numbers
-      const pageCount = pdf.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(149, 165, 166);
-        pdf.text(
-          `Page ${i} of ${pageCount}`,
-          pageWidth - margin - 20,
-          pageHeight - 10
-        );
-      }
       
       // Save the PDF
       pdf.save(`summary-${file?.name?.replace('.pdf', '') || 'document'}.pdf`);
       
       toast({
         title: "Success",
-        description: "Summary downloaded as PDF with proper formatting",
+        description: "Summary downloaded as PDF",
       });
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -660,16 +534,13 @@ export default function HomePage() {
                   <FileText className="h-4 w-4 mr-2" />
                   Choose PDF File
                 </Label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-blue-600/20 rounded-lg blur-sm group-hover:blur-md transition-all duration-300"></div>
-                  <Input
+                <Input
                   id="file"
                   type="file"
                   accept=".pdf"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="relative file:mr-6 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-b file:from-primary file:to-blue-900 file:text-yellow-100 hover:file:from-primary/90 hover:file:to-blue-600/90 file:transition-all file:duration-200 text-base h-14 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-all duration-200"
-                  />
-                </div>
+                  className="file:mr-6 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-b file:from-primary file:to-blue-900 file:text-yellow-100 hover:file:from-primary/90 hover:file:to-blue-600/90 file:transition-all file:duration-200 text-base h-14 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-all duration-200"
+                />
                 {file && (
                   <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-border/50 animate-scale-in">
                     <div className="flex items-center space-x-3">
@@ -919,7 +790,7 @@ export default function HomePage() {
                         ref={summaryRef}
                         className="relative prose prose-sm dark:prose-invert max-w-none p-6 bg-gradient-to-br from-muted/40 to-background/60 rounded-xl border border-border/50 backdrop-blur-sm custom-scrollbar overflow-y-auto max-h-96"
                       >
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <ReactMarkdown remarkPlugins={[require('remark-gfm')]}>
                           {summary}
                         </ReactMarkdown>
                       </div>
@@ -963,23 +834,6 @@ export default function HomePage() {
                       Download as PDF Document
                       <div className="ml-auto text-xs opacity-80">.PDF</div>
                     </Button>
-                  </div>
-                  
-                  <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground bg-muted/30 p-4 rounded-lg">
-                    <div className="flex items-center">
-                      <Shield className="h-4 w-4 mr-1 text-green-600" />
-                      Secure Processing
-                    </div>
-                    <Separator orientation="vertical" className="h-4" />
-                    <div className="flex items-center">
-                      <Zap className="h-4 w-4 mr-1 text-yellow-600" />
-                      Instant Download
-                    </div>
-                    <Separator orientation="vertical" className="h-4" />
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 mr-1 text-purple-600" />
-                      Professional Quality
-                    </div>
                   </div>
                 </div>
               </CardContent>
