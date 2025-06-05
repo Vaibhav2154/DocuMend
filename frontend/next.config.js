@@ -10,7 +10,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // Temporarily ignore TypeScript errors during build
+    // ignoreBuildErrors: true, // Consider removing or commenting this out
   },
   
   // Add webpack configuration to handle potential module issues
@@ -27,20 +27,20 @@ const nextConfig = {
       };
     }
     
-    // Fix for dynamic imports in static exports
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      },
-    };
+    // Remove or comment out the custom splitChunks configuration
+    // config.optimization = {
+    //   ...config.optimization,
+    //   splitChunks: {
+    //     chunks: 'all',
+    //     cacheGroups: {
+    //       vendor: {
+    //         test: /[\\/]node_modules[\\/]/,
+    //         name: 'vendors',
+    //         chunks: 'all',
+    //       },
+    //     },
+    //   },
+    // };
     
     // Handle PDF and document processing libraries
     config.module.rules.push({
