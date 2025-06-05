@@ -6,11 +6,12 @@ const nextConfig = {
     unoptimized: true
   },
   output: 'export',
+  swcMinify: false, // Add this line to use Terser for minification
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // ignoreBuildErrors: true, // Consider removing or commenting this out
+    // ignoreBuildErrors: true, // Keep this commented out or remove
   },
   
   // Add webpack configuration to handle potential module issues
@@ -26,21 +27,6 @@ const nextConfig = {
         canvas: false,
       };
     }
-    
-    // Remove or comment out the custom splitChunks configuration
-    // config.optimization = {
-    //   ...config.optimization,
-    //   splitChunks: {
-    //     chunks: 'all',
-    //     cacheGroups: {
-    //       vendor: {
-    //         test: /[\\/]node_modules[\\/]/,
-    //         name: 'vendors',
-    //         chunks: 'all',
-    //       },
-    //     },
-    //   },
-    // };
     
     // Handle PDF and document processing libraries
     config.module.rules.push({
