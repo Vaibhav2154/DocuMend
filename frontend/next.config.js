@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
   output: 'export',
   eslint: {
     ignoreDuringBuilds: true, // Temporarily ignore ESLint during builds
@@ -14,8 +18,16 @@ const nextConfig = {
         fs: false,
         net: false,
         tls: false,
+        child_process: false,
       };
     }
+    
+    // Fix for potential minification issues
+    config.optimization = {
+      ...config.optimization,
+      minimize: true,
+    };
+    
     return config;
   },
 };
