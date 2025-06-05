@@ -3,8 +3,7 @@ uvicorn[standard]
 python-multipart
 pytesseract
 pdf2image
-python-docx
-python-dotenv>
+python-dotenv
 google-generativeai
 Pillow
 requests
