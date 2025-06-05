@@ -2,9 +2,19 @@
 const nextConfig = {
   output: 'export',
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // Enable ESLint checking during builds
   },
-  images: { unoptimized: true },
+  typescript: {
+    ignoreBuildErrors: false, // Enable TypeScript checking during builds
+  },
+  images: { 
+    unoptimized: true 
+  },
+  trailingSlash: true,
+  // Add experimental features for better performance
+  experimental: {
+    optimizeCss: true,
+  },
 };
 
 module.exports = nextConfig;

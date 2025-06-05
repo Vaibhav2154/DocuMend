@@ -1,11 +1,14 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
+import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Dashboard | Analytics Platform',
-  description: 'Modern analytics dashboard with real-time data',
+  title: 'DocuMend - Document Processing',
+  description: 'Upload PDF, extract text, generate summaries',
 };
 
 export default function RootLayout({
@@ -15,10 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-sans">
+      <body className={inter.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
