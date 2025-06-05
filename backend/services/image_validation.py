@@ -18,28 +18,29 @@ def configure_tesseract():
 FAST_OCR_CONFIG = '--oem 3 --psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,!?;:()[]{}"\'-_@#$%^&*+=<>/\\|`~ '
 
 def extract_text_from_image(image, page_num):
-    """Extract text from a single image with optimized settings"""
+    """Extract text from a single image with debugging"""
     try:
-        # Resize image if too large (speeds up OCR significantly)
-        width, height = image.size
-        if width > 2000 or height > 2000:
-            # Maintain aspect ratio while reducing size
-            ratio = min(2000/width, 2000/height)
-            new_size = (int(width * ratio), int(height * ratio))
-            image = image.resize(new_size, Image.Resampling.LANCZOS)
+        custom_config = r'--oem 3 --psm 6'
+        text = pytesseract.image_to_string(image, config=custom_config)
         
-        # Convert to grayscale for faster processing
-        if image.mode != 'L':
-            image = image.convert('L')
+        # Debug: Print raw text (first 100 chars)
+        print(f"Raw OCR text for page {page_num + 1}: {repr(text[:100])}")
         
-        # Use fast OCR configuration
-        text = pytesseract.image_to_string(
-            image, 
-            config=FAST_OCR_CONFIG,
-            timeout=30  # 30 second timeout per page
-        )
-        return f"[Page {page_num + 1}]\n{text}\n"
+        if text:
+            # Check for problematic characters
+            problematic_chars = ['"', '"', '"', "'", "'"]
+            for char in problematic_chars:
+                if char in text:
+                    print(f"Found problematic character: {repr(char)}")
+            
+            # Clean the text
+            cleaned_text = text.encode('utf-8', 'ignore').decode('utf-8')
+            return f"[Page {page_num + 1}] {cleaned_text.strip()}\n"
+        else:
+            return f"[Page {page_num + 1}] - No text extracted\n"
+            
     except Exception as e:
+        print(f"OCR Exception on page {page_num + 1}: {type(e).__name__}: {str(e)}")
         return f"[Page {page_num + 1}] - Error extracting text: {str(e)}\n"
 
 async def extract_text_from_pdf(file_path: str) -> str:
@@ -59,6 +60,14 @@ async def extract_text_from_pdf(file_path: str) -> str:
             fmt='jpeg',  # JPEG is faster than PNG
             jpegopt={'quality': 85, 'optimize': True}
         )
+        
+        if not images:
+            raise Exception("No pages could be extracted from PDF")
+        
+        # Add validation for image quality
+        for i, image in enumerate(images):
+            if image.size[0] < 100 or image.size[1] < 100:
+                print(f"Warning: Page {i+1} image is very small: {image.size}")
         
         print(f"Processing {len(images)} pages with parallel OCR")
         
@@ -92,6 +101,34 @@ async def extract_text_from_pdf(file_path: str) -> str:
         
     except Exception as e:
         raise Exception(f"Error extracting text from PDF: {str(e)}")
+
+def extract_text_from_pdf(pdf_path):
+    """Extract text from PDF with better error handling"""
+    try:
+        print(f"Processing PDF: {pdf_path}")
+        
+        # Convert PDF to images with higher DPI for better OCR
+        images = convert_from_path(pdf_path, dpi=300, fmt='jpeg')
+        print(f"Converted PDF to {len(images)} images")
+        
+        if not images:
+            return "Error: No pages found in PDF"
+        
+        extracted_text = ""
+        for i, image in enumerate(images):
+            print(f"Processing page {i + 1}, image size: {image.size}")
+            
+            # Enhance image for better OCR
+            image = image.convert('RGB')
+            
+            page_text = extract_text_from_image(image, i)
+            extracted_text += page_text
+            
+        return extracted_text.strip()
+        
+    except Exception as e:
+        print(f"PDF processing error: {type(e).__name__}: {str(e)}")
+        return f"Error processing PDF: {str(e)}"
 
 # Synchronous wrapper for backward compatibility
 def extract_text_from_pdf_sync(file_path: str) -> str:
