@@ -31,6 +31,7 @@ import {
   BarChart3
 } from "lucide-react";
 import dynamic from 'next/dynamic';
+import remarkGfm from 'remark-gfm'; // Add this import
 
 // Dynamically import components that might cause SSR issues
 const ReactMarkdown = dynamic(() => import('react-markdown'), { 
@@ -805,7 +806,7 @@ export default function HomePage() {
                         ref={summaryRef}
                         className="relative prose prose-sm dark:prose-invert max-w-none p-6 bg-gradient-to-br from-muted/40 to-background/60 rounded-xl border border-border/50 backdrop-blur-sm custom-scrollbar overflow-y-auto max-h-96"
                       >
-                        <ReactMarkdown remarkPlugins={[require('remark-gfm')]}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {summary}
                         </ReactMarkdown>
                       </div>
