@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'export',
   eslint: {
-    ignoreDuringBuilds: true, // Temporarily ignore ESLint during builds
+     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: false,
@@ -12,9 +12,8 @@ const nextConfig = {
   },
   trailingSlash: true,
   experimental: {
-    optimizeCss: true,
+    esmExternals: false,
   },
-  // Add webpack configuration to handle potential module issues
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -22,8 +21,18 @@ const nextConfig = {
         fs: false,
         net: false,
         tls: false,
+        child_process: false,
       };
     }
+    
+    // Handle potential dependency issues
+    config.module.rules.push({
+      test: /\.m?js$/,
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+    
     return config;
   },
 };
