@@ -1,15 +1,67 @@
-# DocuMend
+# DocuMend - OCR-to-JSON Parser
 
 > **⚠️ Performance Note:** Since Tesseract OCR is deployed on Render's free tier with limited hardware resources, PDF text extraction may take significantly longer than expected. For a demonstration of the application's full functionality, please watch this demo video: [DocuMend Demo](https://drive.google.com/file/d/1byCUJWrFqmBaTPwT03-j3Ff4R16t5LUW/view?usp=sharing)
 
-DocuMend is a full-stack application designed for processing and summarizing PDF documents. It leverages a Python-based backend with FastAPI and a Next.js frontend.
+DocuMend is an advanced **OCR-to-JSON Parser** that extracts text from images and PDFs, then returns structured JSON output with AI-powered analysis. The application also includes a secondary PDF summarization feature for comprehensive document processing.
+
+## Assignment Overview
+
+This project fulfills the **OCR-to-JSON Parser Assignment** requirements:
+
+### ✅ Assignment Requirements Met
+
+1. **Upload Input Support**:
+   - ✅ JPG and PNG image formats
+   - ✅ **Bonus**: Scanned PDFs
+
+2. **OCR Implementation**:
+   - ✅ Tesseract OCR engine integration
+   - ✅ Accurate text extraction from documents
+
+3. **Output Format**:
+   - ✅ Structured JSON output
+   - ✅ Clean and accurate text extraction
+
+4. **Interface**:
+   - ✅ Modern web-based interface
+   - ✅ Built with Next.js + TypeScript + Tailwind CSS
+
+### 🌟 Bonus Features Implemented
+
+- ✅ **Advanced Text Cleaning**: Removes extra spaces, line breaks, normalizes text
+- ✅ **Key-Value Pair Detection**: Automatically identifies dates, amounts, invoice numbers, emails, phone numbers, names
+- ✅ **Multi-language Support**: 13+ languages supported with OCR language packs
+- ✅ **AI Enhancement**: Google Gemini AI for intelligent document analysis and classification
+- ✅ **Download Options**: Export results as JSON files
+
+## 🚀 Live Demo
+
+- **GitHub Repository**: [https://github.com/yourusername/DocuMend](https://github.com/yourusername/DocuMend)
+- **Live Application**: [https://documend-frontend.vercel.app](https://documend-frontend.vercel.app)
+- **Backend API**: [https://documend-backend.onrender.com](https://documend-backend.onrender.com)
 
 ## Features
 
--   **PDF Validation**: Ensures uploaded files are valid PDFs.
--   **Text Extraction**: Extracts text from PDF documents using Tesseract OCR.
--   **Summarization**: Utilizes Google Generative AI to summarize the extracted text.
--   **Chatbot Interface**: Allows users to interact with the summarized content.
+### 🚀 Primary Feature: OCR-to-JSON Parser
+
+- **Multi-format Support**: Processes JPG, PNG, and PDF files
+- **Advanced OCR Technology**: Uses Tesseract OCR engine for accurate text extraction
+- **AI-Enhanced Analysis**: Google Gemini AI for intelligent document analysis
+- **Key-Value Detection**: Automatically identifies dates, amounts, invoice numbers, emails, phone numbers, and names
+- **Document Classification**: Intelligent categorization (invoice, identity, financial, general)
+- **Text Cleaning**: Removes extra spaces, line breaks, and normalizes text
+- **Multi-language Support**: Supports 13+ languages including English, French, German, Spanish, Chinese, Japanese, and more
+- **Structured JSON Output**: Returns clean, structured JSON with extracted data and metadata
+- **Real-time Processing**: Fast extraction with progress tracking
+- **Export Options**: Download results as JSON files
+
+### 📄 Secondary Feature: PDF Summarization
+
+- **PDF Validation**: Ensures uploaded files are valid PDFs
+- **Text Extraction**: Extracts text from PDF documents using Tesseract OCR
+- **AI Summarization**: Utilizes Google Generative AI to summarize the extracted text
+- **Multiple Templates**: Various summary formats (Executive, Technical, Business, Academic, General)
+- **Download Options**: Export summaries as Word documents or PDFs
 
 ## Tech Stack
 
@@ -50,19 +102,25 @@ DocuMend/
 │   ├── render-build.sh     # Build script for Render
 │   ├── requirements.txt    # Python dependencies
 │   ├── routers/            # API route handlers
-│   │   ├── chatbot.py
-│   │   └── validate.py
+│   │   ├── chatbot.py      # Summarization endpoints
+│   │   ├── ocr.py          # OCR-to-JSON endpoints  
+│   │   └── validate.py     # PDF validation endpoints
 │   ├── services/           # Business logic
-│   │   ├── chatbot_rag.py
-│   │   └── image_validation.py
+│   │   ├── chatbot_rag.py  # RAG-based chatbot service
+│   │   ├── image_validation.py # Legacy PDF processing
+│   │   └── ocr_service.py  # OCR processing service
 │   ├── templates/          # Response templates
 │   └── utils/              # Utility functions
 ├── frontend/
 │   ├── app/                # Next.js app directory
 │   │   ├── globals.css
 │   │   ├── layout.tsx
-│   │   └── page.tsx
+│   │   ├── page.tsx        # PDF Summarizer page
+│   │   └── ocr/
+│   │       └── page.tsx    # OCR-to-JSON Parser page
 │   ├── components/         # React components
+│   │   ├── navigation.tsx  # Shared navigation component
+│   │   └── ui/             # shadcn/ui components
 │   ├── public/             # Static assets
 │   ├── next.config.js      # Next.js configuration
 │   ├── package.json        # Node.js dependencies
