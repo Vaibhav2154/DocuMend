@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from routers import validate, chatbot
+from routers import validate, chatbot, ocr
 import os
 
 app = FastAPI(
@@ -27,13 +27,16 @@ app.add_middleware(
 # Include routers
 app.include_router(validate.router, prefix="/validate", tags=["PDF Validation"])
 app.include_router(chatbot.router, prefix="/summarize", tags=["Summarization"])
+app.include_router(ocr.router, prefix="/ocr", tags=["OCR Processing"])
 
 @app.get("/")
 def root():
     return {
-        "message": "DocuMend API - PDF Processing and Summarization",
+        "message": "DocuMend API - PDF Processing and OCR-to-JSON Parser",
         "endpoints": {
             "pdf_extraction": "/validate/pdf",
+            "ocr_extraction": "/ocr/extract",
+            "supported_languages": "/ocr/languages",
             "summarization": "/summarize/summarize",
             "health": "/summarize/health"
         }
